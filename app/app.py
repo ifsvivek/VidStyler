@@ -1,46 +1,14 @@
 import gradio as gr
-import os
-import time
+import sys
 import numpy as np
 import cv2
-from PIL import Image
-import sys
-import tempfile
-import shutil
-import matplotlib.pyplot as plt
+import time
 
 # Add the project root to the path so we can import our modules
 sys.path.append("/home/sic/Documentations/Vivek_FYP")
+from src.video_stabilization.stabilize import stabilize_video
+from src.object_removal.inpainting import remove_object
 from src.style_transfer.neural_style import apply_neural_style_transfer
-from src.video_stabilization.vidstab import (
-    VidStabWrapper,
-    get_layer_overlay,
-    get_layer_blend,
-)
-
-
-def remove_object(image, mask=None, method="deepfill"):
-    """
-    Placeholder for object removal function.
-    In a real implementation, this would remove the selected object and fill in the area.
-    """
-    # Simulate processing time
-    time.sleep(2)
-
-    # For now, just return the original image as a placeholder
-    if mask is not None and image is not None:
-        # Apply a simple blurring effect to simulate object removal
-        try:
-            result = image.copy()
-            mask_np = mask.astype(np.uint8) * 255
-            blurred = cv2.GaussianBlur(image, (25, 25), 0)
-            mask_np = mask_np[:, :, np.newaxis] if len(mask_np.shape) == 2 else mask_np
-            result = np.where(mask_np > 0, blurred, image)
-            return result
-        except Exception as e:
-            print(f"Error in remove_object: {e}")
-            return image
-    return image
 
 
 def create_style_transfer_tab():
@@ -87,22 +55,16 @@ def create_style_transfer_tab():
                 neural_output_image = gr.Image(label="Stylized Output")
                 neural_progress = gr.Textbox(label="Progress")
 
-        # Function to update progress
-        def update_progress(step, total_steps, loss):
-            return f"Step {step}/{total_steps} - Loss: {loss:.2f}"
-
         # Function to apply neural style transfer
         def process_neural_style_transfer(
             content_img, style_img, style_w, content_w, iters
         ):
+            import time
+
             if content_img is None or style_img is None:
                 return None, "Please upload both content and style images."
 
             try:
-                # Apply neural style transfer with progress updates
-                def progress_callback(step, total, loss):
-                    gr.update(value=f"Step {step}/{total} - Loss: {loss:.2f}")
-
                 # Apply style transfer
                 start_time = time.time()
                 stylized_img = apply_neural_style_transfer(
@@ -149,148 +111,6 @@ def create_style_transfer_tab():
         )
 
 
-def video_stabilization(
-    video_path,
-    kp_method,
-    smoothing_radius,
-    border_type,
-    border_size,
-    use_layer_effect,
-    layer_effect_type,
-    layer_alpha,
-    show_plots,
-):
-    """
-    Stabilize a video using VidStab
-
-    Args:
-        video_path: Path to input video
-        kp_method: Keypoint detection method
-        smoothing_radius: Radius of smoothing window
-        border_type: Type of border handling
-        border_size: Size of border
-        use_layer_effect: Whether to use layer effects
-        layer_effect_type: Type of layer effect
-        layer_alpha: Alpha for blend effect
-        show_plots: Whether to generate plots
-
-    Returns:
-        stabilized_video_path: Path to stabilized video
-        trajectory_plot_path: Path to trajectory plot
-        transforms_plot_path: Path to transforms plot
-        message: Status message
-    """
-    try:
-        if video_path is None:
-            return None, None, None, "Please upload a video first."
-
-        # Create temporary output path
-        output_path = tempfile.mktemp(suffix=".mp4")
-
-        # Initialize stabilizer with the selected keypoint method
-        stabilizer = VidStabWrapper(kp_method=kp_method)
-
-        # Set up layer function if enabled
-        layer_func = None
-        if use_layer_effect:
-            if layer_effect_type == "overlay":
-                layer_func = get_layer_overlay
-            elif layer_effect_type == "blend":
-                # Create a closure to pass the alpha value
-                def custom_blend(foreground, background):
-                    return get_layer_blend(foreground, background, alpha=layer_alpha)
-
-                layer_func = custom_blend
-
-        # Generate transforms first (separate step for better error handling)
-        print(
-            f"Generating transforms with {kp_method} keypoints and smoothing window of {smoothing_radius}..."
-        )
-
-        # Updated to use the fixed gen_transforms method
-        success = stabilizer.gen_transforms(
-            input_path=video_path, 
-            smoothing_window=int(smoothing_radius),
-        )
-
-        if not success:
-            return (
-                None,
-                None,
-                None,
-                "Failed to generate transforms. Try a different keypoint method or check the video file.",
-            )
-
-        # Apply transforms to create the stabilized video
-        print(
-            f"Applying transforms with border type {border_type} and border size {border_size}..."
-        )
-        
-        # Keep border_size as string "auto" or convert to int if it's a numeric string
-        processed_border_size = border_size
-        if border_size != "auto":
-            try:
-                processed_border_size = int(border_size)
-            except ValueError:
-                print(f"Warning: Could not convert border_size '{border_size}' to int, using 'auto'")
-                processed_border_size = "auto"
-        
-        success = stabilizer.apply_transforms(
-            input_path=video_path,
-            output_path=output_path,
-            border_type=border_type,
-            border_size=processed_border_size,
-            layer_func=layer_func,
-        )
-
-        if not success:
-            return (
-                None,
-                None,
-                None,
-                "Failed to apply transforms. Check logs for details.",
-            )
-
-        # Generate plots if requested
-        trajectory_plot_path = None
-        transforms_plot_path = None
-        if show_plots:
-            try:
-                # Generate trajectory plot - now get the figure directly
-                trajectory_fig = stabilizer.plot_trajectory()
-                trajectory_plot_path = tempfile.mktemp(suffix=".png")
-                trajectory_fig.savefig(trajectory_plot_path)
-                plt.close(trajectory_fig)
-
-                # Generate transforms plot - now get the figure directly
-                transforms_fig = stabilizer.plot_transforms()
-                transforms_plot_path = tempfile.mktemp(suffix=".png")
-                transforms_fig.savefig(transforms_plot_path)
-                plt.close(transforms_fig)
-            except Exception as e:
-                import traceback
-                print(f"Error generating plots: {traceback.format_exc()}")
-                return (
-                    output_path,
-                    None,
-                    None,
-                    f"Video stabilized, but error generating plots: {str(e)}",
-                )
-
-        return (
-            output_path,
-            trajectory_plot_path,
-            transforms_plot_path,
-            "Video stabilization completed successfully.",
-        )
-
-    except Exception as e:
-        import traceback
-        error_details = traceback.format_exc()
-        print(f"Error during video stabilization: {error_details}")
-        return None, None, None, f"Error during video stabilization: {str(e)}"
-
-
 def create_video_stabilization_tab():
     """Creates the video stabilization tab UI elements."""
     with gr.Tab("Video Stabilization"):
@@ -331,12 +151,7 @@ def create_video_stabilization_tab():
                     )
 
                     border_size = gr.Radio(
-                        choices=[
-                            "auto",
-                            "0",
-                            "50",
-                            "100",
-                        ],  # Put 'auto' first to be the default
+                        choices=["auto", "0", "50", "100"],
                         value="auto",
                         label="Border Size",
                         info="Size of border in pixels, or 'auto' for automatic sizing",
@@ -398,7 +213,7 @@ def create_video_stabilization_tab():
         )
 
         stabilize_button.click(
-            fn=video_stabilization,
+            fn=stabilize_video,
             inputs=[
                 video_input,
                 kp_method,
@@ -438,56 +253,110 @@ def create_video_stabilization_tab():
 def create_object_removal_tab():
     """Creates the object removal tab UI elements."""
     with gr.Tab("Object Removal"):
-        with gr.Row():
-            with gr.Column():
-                # For older versions of Gradio, use simple Image components
-                image_input = gr.Image(label="Input Image", type="numpy")
-                mask_input = gr.Image(
-                    label="Draw a mask over the object to remove", type="numpy"
-                )
-
-                removal_method = gr.Radio(
-                    choices=["deepfill", "patchmatch", "generative"],
-                    value="deepfill",
-                    label="Inpainting Method",
-                )
-
-                remove_button = gr.Button("Remove Object")
-
-                gr.Markdown(
-                    """
-                **Instructions:** 
-                1. Upload an image
-                2. Draw a mask in another drawing program and upload it as a black and white image 
-                   (white areas will be removed)
-                3. Choose an inpainting method
-                4. Click "Remove Object"
-                """
-                )
-
-            with gr.Column():
-                image_output = gr.Image(label="Result")
-
-        remove_button.click(
-            fn=remove_object,
-            inputs=[image_input, mask_input, removal_method],
-            outputs=image_output,
-        )
-
         gr.Markdown(
             """
         ## Object Removal
         
         This tool allows you to remove unwanted objects from images using intelligent inpainting technology.
-        
+        Draw over the objects you want to remove and select an inpainting method.
+        """
+        )
+
+        with gr.Row():
+            with gr.Column():
+                # Use ImageEditor instead of Image
+                input_image = gr.ImageEditor(
+                    label="Draw over objects to remove",
+                    type="numpy",
+                    height=500,
+                )
+
+                with gr.Row():
+                    removal_method = gr.Radio(
+                        choices=["deepfill", "patchmatch", "generative"],
+                        value="patchmatch",
+                        label="Inpainting Method",
+                    )
+                    remove_button = gr.Button("Remove Object", variant="primary")
+
+            with gr.Column():
+                image_output = gr.Image(label="Result", height=500)
+                status = gr.Textbox(label="Status")
+
+        # Process the image removal
+        def process_removal(image_data, method):
+            if image_data is None:
+                return None, "Please upload an image and draw a mask"
+
+            try:
+                # Extract the layers from ImageEditor output
+                if isinstance(image_data, dict) and "composite" in image_data and "background" in image_data:
+                    # Get the original image (background)
+                    image = image_data["background"]
+                    
+                    # Get the image with drawing (composite)
+                    composite = image_data["composite"]
+                    
+                    # Get image dimensions
+                    h, w = image.shape[:2]
+                    
+                    # Create a mask by finding the difference between composite and background
+                    diff = cv2.absdiff(composite, image)
+                    
+                    # Convert to grayscale
+                    if len(diff.shape) == 3:
+                        mask_gray = cv2.cvtColor(diff, cv2.COLOR_RGB2GRAY)
+                    else:
+                        mask_gray = diff
+                    
+                    # Apply threshold to create binary mask
+                    _, mask = cv2.threshold(mask_gray, 10, 255, cv2.THRESH_BINARY)
+                    
+                    # Make sure mask is uint8
+                    mask = mask.astype(np.uint8)
+                    
+                    # Debug info
+                    print(f"Image shape: {image.shape}, type: {image.dtype}")
+                    print(f"Mask shape: {mask.shape}, type: {mask.dtype}")
+                    print(f"Mask values - min: {mask.min()}, max: {mask.max()}")
+                    
+                    # Apply object removal
+                    # Make a copy of the image to ensure we're not modifying the original
+                    image_copy = image.copy()
+                    
+                    # Apply inpainting
+                    result = remove_object(image_copy, mask, method)
+                    
+                    return result, f"Object removed using {method} method"
+                else:
+                    return None, "Please draw on the image to mark areas for removal"
+
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                return None, f"Error processing image: {str(e)}"
+
+        # Connect the remove button
+        remove_button.click(
+            fn=process_removal,
+            inputs=[input_image, removal_method],
+            outputs=[image_output, status],
+        )
+
+        gr.Markdown(
+            """
         ### Instructions:
-        1. Upload an image
-        2. Upload a mask image where the white areas indicate what to remove
-        3. Select an inpainting method:
-           - DeepFill: Better for structured scenes
-           - PatchMatch: Good for textured backgrounds
-           - Generative: Best for complex scenes but slower
+        1. Upload an image to the editor
+        2. Use the drawing tools to mark areas you want to remove
+        3. Select an inpainting method
         4. Click "Remove Object" to process the image
+        
+        ### Tips:
+        - For small objects, the PatchMatch method often gives clean results
+        - For complex scenes, try the generative method
+        - Draw carefully to cover the entire object you want to remove
+        - Use a thicker brush for better coverage
+        - Make sure to completely cover the object you want to remove
         """
         )
 
