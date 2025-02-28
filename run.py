@@ -10,4 +10,4 @@ from app.app import create_ui
 if __name__ == "__main__":
     app = create_ui()
     # Launch with larger default height and with sharing enabled
-    app.launch(height=900, share=True)
+    app.launch(height=900)
