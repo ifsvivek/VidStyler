@@ -1,82 +1,119 @@
 # Object Removal Module
 
-This module implements automatic object removal from images and videos with intelligent inpainting to fill the removed areas. It combines object detection, segmentation, tracking (for videos), and inpainting technologies.
+This module implements intelligent object removal from images using inpainting techniques. It provides functionality to remove unwanted objects from images by drawing over them, and then using advanced inpainting algorithms to fill in the removed areas naturally.
 
 ## Features
 
--   Automatic object detection with pre-trained models
--   Interactive object selection for custom removal
--   Smart inpainting algorithms to fill removed areas
--   Object tracking for consistent removal in videos
--   Support for removing multiple objects
--   Different inpainting models optimized for various scenarios
+-   Interactive object removal by drawing over unwanted areas
+-   Multiple inpainting methods for different use cases
+-   Support for images with alpha channels
+-   Integration with Gradio UI for easy use
 
 ## Implementation Details
 
 The object removal pipeline consists of these main components:
 
-### 1. Object Detection and Segmentation
+### 1. User Interaction
 
--   Uses pre-trained models (like Mask R-CNN, YOLO, etc.) to detect common objects
--   Provides an interface for manual selection of objects not automatically detected
--   Generates precise masks for the detected objects
+-   Draw over objects to remove using the brush tool
+-   Selection of inpainting method based on image content
+-   Real-time feedback in web interface
 
-### 2. Image Inpainting
+### 2. Mask Generation
 
--   Implements deep learning-based inpainting to fill the removed object regions
--   Supports both CNN-based and GAN-based inpainting methods
--   Preserves texture and structural consistency in the filled regions
+-   Automatic mask generation from user drawings
+-   Binary mask creation with thresholding and dilation
+-   Preprocessing to ensure compatibility with inpainting algorithms
 
-### 3. Video Object Tracking and Removal
+### 3. Image Inpainting Methods
 
--   Tracks selected objects across video frames
--   Maintains temporal consistency in the inpainting process
--   Optimizes performance for video processing
+#### OpenCV Inpainting
 
-## Inpainting Methods
+-   Fast inpainting using traditional computer vision techniques
+-   Good for simple backgrounds and small objects
+-   Two methods: Navier-Stokes (NS) and Telea algorithms
 
-This module offers multiple inpainting approaches:
+#### DeepFill Inpainting
 
-### Patch-based Inpainting
-
--   Traditional approach using patches from other parts of the image
--   Good for textured backgrounds with repeating patterns
-
-### Deep Learning Inpainting
-
--   Uses encoder-decoder networks or GANs for inpainting
--   Better for complex scenes with non-repetitive structures
--   Produces more natural-looking results for large removed areas
+-   Machine learning-based inpainting using TensorFlow
+-   Uses pre-trained model for high-quality results
+-   Better for complex textures and larger removed areas
+-   Adapts to image content for more natural filling
 
 ## Usage
 
+### Command Line Interface
+
 ```python
-from object_removal import ObjectRemover
+import cv2
+from src.object_removal.inpainting import remove_object
 
-# Create an instance
-remover = ObjectRemover(
-    detection_model='mask_rcnn',
-    inpainting_model='deepfill_v2'
-)
+# Load image and create mask
+image = cv2.imread('image.jpg')
+mask = cv2.imread('mask.png', cv2.IMREAD_GRAYSCALE)
 
-# For images
-result_image = remover.remove_from_image(
-    image_path="path/to/image.jpg",
-    objects_to_remove=["person", "car"],  # Object categories to remove
-    custom_masks=None  # Optional custom masks
-)
+# Remove object using default method
+result = remove_object(image, mask)
 
-# For videos
-remover.remove_from_video(
-    video_path="path/to/video.mp4",
-    output_path="path/to/result.mp4",
-    objects_to_remove=["person"],
-    tracking_method="deep_sort"
-)
+# Or specify a method
+result_deepfill = remove_object(image, mask, method='deepfill')
+result_opencv = remove_object(image, mask, method='generative')
+
+# Save result
+cv2.imwrite('result.jpg', result)
 ```
 
-## References
+### Using DeepFillInpainter Directly
 
--   Pathak, D., Krahenbuhl, P., Donahue, J., Darrell, T., & Efros, A. A. (2016). Context encoders: Feature learning by inpainting.
--   Yu, J., Lin, Z., Yang, J., Shen, X., Lu, X., & Huang, T. S. (2018). Generative image inpainting with contextual attention.
--   Liu, G., Reda, F. A., Shih, K. J., Wang, T. C., Tao, A., & Catanzaro, B. (2018). Image inpainting for irregular holes using partial convolutions.
+```python
+from src.object_removal.deepfill_inpainter import DeepFillInpainter
+
+# Initialize the inpainter
+inpainter = DeepFillInpainter(model_path='./model/pretrained_model')
+
+# Inpaint an image
+result = inpainter.inpaint(image, mask)
+```
+
+### Web UI Usage
+
+The module integrates with the Gradio-based web interface:
+
+1. Upload an image to the editor
+2. Draw over objects you want to remove
+3. Select the inpainting method:
+    - Auto (Default): Chooses the best method based on your image
+    - DeepFill: Uses machine learning for more natural results
+    - OpenCV: Faster but may be less accurate for complex scenes
+4. Click "Remove Object" to process the image
+5. Use "Reset Image" to clear your drawings and start over
+
+
+## UI
+
+![UI](../../img/VisualAlchemy3-1.png)
+
+## Technical Details
+
+### DeepFill Model
+
+The DeepFill model uses a neural network architecture with:
+
+-   Encoder-decoder structure
+-   Skip connections for preserving detail
+-   Supports various input image sizes
+-   Pretrained on large datasets of natural images
+
+### Performance Considerations
+
+-   OpenCV methods are faster but may produce less natural results
+-   DeepFill provides higher quality but requires more computational resources
+-   Images with alpha channels are properly handled by both methods
+-   For real-time applications, OpenCV methods are recommended
+-   For best quality where speed is not critical, DeepFill is recommended
+
+## Dependencies
+
+-   OpenCV
+-   NumPy
+-   TensorFlow (for DeepFill method)

@@ -25,6 +25,7 @@ try:
         Saver = tf.train.Saver
 
     from src.object_removal.model.model import Model
+    from src.object_removal.deepfill_inpainter import DeepFillInpainter
 
     TF_AVAILABLE = True
 except ImportError as e:
@@ -33,6 +34,9 @@ except ImportError as e:
 except Exception as e:
     print(f"TensorFlow setup error: {e}")
     TF_AVAILABLE = False
+
+# Create global DeepFillInpainter instance
+_deepfill_inpainter = None
 
 
 def remove_object(image, mask=None, method="deepfill"):
@@ -104,6 +108,15 @@ def cv2_inpainting(image, mask, advanced=False):
         if image.dtype != np.uint8:
             image = (image * 255).astype(np.uint8)
 
+        # Handle alpha channel if present (4 channels)
+        has_alpha = False
+        alpha_channel = None
+        if image.shape[2] == 4:
+            print("Detected image with alpha channel, extracting RGB")
+            has_alpha = True
+            alpha_channel = image[:, :, 3]
+            image = image[:, :, :3]  # Extract RGB channels only
+
         # Ensure mask is uint8 single channel
         if len(mask.shape) > 2:
             mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
@@ -131,6 +144,10 @@ def cv2_inpainting(image, mask, advanced=False):
             # Use basic method
             result = cv2.inpaint(image, mask, 3, cv2.INPAINT_NS)
 
+        # If the original image had an alpha channel, add it back to the result
+        if has_alpha and alpha_channel is not None:
+            result = np.dstack((result, alpha_channel))
+            
         print("Inpainting completed successfully")
         return result
 
@@ -176,10 +193,42 @@ def patchmatch_inpainting(image, mask):
 
 def deepfill_inpainting(image, mask):
     """Advanced inpainting using DeepFill algorithm"""
+    global _deepfill_inpainter
+    
     if not TF_AVAILABLE:
+        print("TensorFlow not available, falling back to OpenCV inpainting")
         return cv2_inpainting(image, mask)
 
-    # Simplified implementation for now - future enhancement
-    # This should be replaced with actual DeepFill implementation when ready
-    print("DeepFill requested but using OpenCV inpainting as fallback")
-    return cv2_inpainting(image, mask, advanced=True)
+    # Initialize the inpainter if not already done
+    try:
+        if _deepfill_inpainter is None:
+            print("Initializing DeepFill inpainter...")
+            _deepfill_inpainter = DeepFillInpainter()
+            
+        if not _deepfill_inpainter.is_model_loaded():
+            print("DeepFill model not loaded, falling back to OpenCV inpainting")
+            return cv2_inpainting(image, mask, advanced=True)
+            
+        # Handle alpha channel if present
+        has_alpha = False
+        alpha_channel = None
+        if len(image.shape) == 3 and image.shape[2] == 4:
+            print("Detected image with alpha channel, extracting RGB")
+            has_alpha = True
+            alpha_channel = image[:, :, 3]
+            image = image[:, :, :3]  # Extract RGB channels only
+            
+        # Perform inpainting using DeepFill model
+        result = _deepfill_inpainter.inpaint(image, mask)
+        
+        # Reattach alpha channel if needed
+        if has_alpha and alpha_channel is not None:
+            result = np.dstack((result, alpha_channel))
+            
+        return result
+        
+    except Exception as e:
+        print(f"DeepFill inpainting error: {e}, falling back to OpenCV")
+        import traceback
+        traceback.print_exc()
+        return cv2_inpainting(image, mask, advanced=True)

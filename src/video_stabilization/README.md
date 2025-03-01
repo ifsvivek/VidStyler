@@ -1,356 +1,142 @@
-### Install `vidstab` without installing OpenCV
+# Video Stabilization Module
 
-If you've already built OpenCV with python bindings on your machine it is recommended to install `vidstab` without installing the pypi versions of OpenCV. The `opencv-python` python module can cause issues if you've already built OpenCV from source in your environment.
+This module provides a simple yet powerful interface for video stabilization using the `vidstab` library, wrapped in a convenient Python class.
 
-The below commands will install `vidstab` without OpenCV included.
+## Overview
 
-#### From PyPi
+The video stabilization module reduces camera shake from videos by:
 
-```bash
-pip install vidstab
-```
+1. Tracking features across video frames
+2. Computing transformations between consecutive frames
+3. Smoothing the camera trajectory
+4. Applying the smoothed transformations to create a stabilized video
 
-#### From GitHub
+## Features
 
-```bash
-pip install git+https://github.com/AdamSpannbauer/python_video_stab.git
-```
+-   Multiple keypoint detection methods:
 
-### Install `vidstab` & OpenCV
+    -   GFTT (Good Features to Track) - Default, works well for most videos
+    -   SIFT - High accuracy but slower
+    -   SURF - Good balance of speed and accuracy
+    -   ORB - Fast and efficient
+    -   BRISK - Fast binary feature detector
+    -   FAST - Very fast corner detection
 
-If you don't have OpenCV installed already there are a couple options.
+-   Customizable stabilization parameters:
 
-1. You can build OpenCV using one of the great online tutorials from [PyImageSearch](https://www.pyimagesearch.com/), [LearnOpenCV](https://www.learnopencv.com/), or [OpenCV](https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_setup/py_table_of_contents_setup/py_table_of_contents_setup.html#py-table-of-content-setup) themselves. When building from source you have more options (e.g. [platform optimization](https://www.pyimagesearch.com/2017/10/09/optimizing-opencv-on-the-raspberry-pi/)), but more responsibility. Once installed you can use the pip install command shown above.
-2. You can install a pre-built distribution of OpenCV from pypi as a dependency for `vidstab` (see command below)
+    -   Smoothing radius (window size)
+    -   Border handling (black, reflect, replicate)
+    -   Border size control
 
-The below commands will install `vidstab` with `opencv-contrib-python` as dependencies.
+-   Advanced features:
+    -   Layer effects (overlay, blend) for artistic motion trails
+    -   Save/load transformation matrices
+    -   Plot trajectory and transform visualizations
+    -   Frame-by-frame processing capability
 
-#### From PyPi
 
-```bash
-pip install vidstab[cv2]
-```
+## UI
 
-#### From Github
+![Video Stabilization UI](../../img/VisualAlchemy2-1.png)
 
-```bash
- pip install -e git+https://github.com/AdamSpannbauer/python_video_stab.git#egg=vidstab[cv2]
-```
+## Usage Examples
 
-## Basic usage
-
-The `VidStab` class can be used as a command line script or in your own custom python code.
-
-### Using from command line
-
-```bash
-# Using defaults
-python3 -m vidstab --input input_video.mov --output stable_video.avi
-```
-
-```bash
-# Using a specific keypoint detector
-python3 -m vidstab -i input_video.mov -o stable_video.avi -k GFTT
-```
-
-### Using `VidStab` class
+### Basic Usage
 
 ```python
-from vidstab import VidStab
+from src.video_stabilization.vidstab import VidStabWrapper
 
-# Using defaults
-stabilizer = VidStab()
-stabilizer.stabilize(input_path='input_video.mov', output_path='stable_video.avi')
+# Initialize with default parameters (GFTT keypoint detector)
+stabilizer = VidStabWrapper()
 
-# Using a specific keypoint detector
-stabilizer = VidStab(kp_method='ORB')
-stabilizer.stabilize(input_path='input_video.mp4', output_path='stable_video.avi')
-
-# Using a specific keypoint detector and customizing keypoint parameters
-stabilizer = VidStab(kp_method='FAST', threshold=42, nonmaxSuppression=False)
-stabilizer.stabilize(input_path='input_video.mov', output_path='stable_video.avi')
+# Stabilize a video
+stabilizer.stabilize(
+    input_path="shaky_video.mp4",
+    output_path="stabilized_video.mp4",
+    smoothing_window=30,
+    border_type="black"
+)
 ```
 
-## Advanced usage
-
-### Plotting frame to frame transformations
+### Advanced Usage
 
 ```python
-from vidstab import VidStab
-import matplotlib.pyplot as plt
+from src.video_stabilization.vidstab import VidStabWrapper, get_layer_blend
 
-stabilizer = VidStab()
-stabilizer.stabilize(input_path='input_video.mov', output_path='stable_video.avi')
+# Initialize with SIFT keypoint detector
+stabilizer = VidStabWrapper(kp_method="SIFT")
 
-stabilizer.plot_trajectory()
-plt.show()
+# Generate transforms first
+stabilizer.gen_transforms(
+    input_path="shaky_video.mp4",
+    smoothing_window=45
+)
 
-stabilizer.plot_transforms()
-plt.show()
+# Save transforms for later use
+stabilizer.save_transforms("transforms.csv")
+
+# Apply transforms with a blend effect
+stabilizer.apply_transforms(
+    input_path="shaky_video.mp4",
+    output_path="stabilized_with_trails.mp4",
+    border_type="reflect",
+    border_size=100,
+    layer_func=lambda fg, bg: get_layer_blend(fg, bg, alpha=0.7)
+)
+
+# Create plots for analysis
+trajectory_fig = stabilizer.plot_trajectory()
+transforms_fig = stabilizer.plot_transforms()
+trajectory_fig.savefig("trajectory.png")
+transforms_fig.savefig("transforms.png")
 ```
 
-|                              Trajectories                               |                               Transforms                                |
-| :---------------------------------------------------------------------: | :---------------------------------------------------------------------: |
-| ![](https://s3.amazonaws.com/python-vidstab/readme/trajectory_plot.png) | ![](https://s3.amazonaws.com/python-vidstab/readme/transforms_plot.png) |
-
-### Using borders
-
-```python
-from vidstab import VidStab
-
-stabilizer = VidStab()
-
-# black borders
-stabilizer.stabilize(input_path='input_video.mov',
-                     output_path='stable_video.avi',
-                     border_type='black')
-stabilizer.stabilize(input_path='input_video.mov',
-                     output_path='wide_stable_video.avi',
-                     border_type='black',
-                     border_size=100)
-
-# filled in borders
-stabilizer.stabilize(input_path='input_video.mov',
-                     output_path='ref_stable_video.avi',
-                     border_type='reflect')
-stabilizer.stabilize(input_path='input_video.mov',
-                     output_path='rep_stable_video.avi',
-                     border_type='replicate')
-```
-
-<table>
-  <tr>
-    <td><p align='center'><code>border_size=0</code></p></td>
-    <td><p align='center'><code>border_size=100</code></p></td>
-  </tr>
-  <tr>
-    <td><p align='center'><img src='https://s3.amazonaws.com/python-vidstab/readme/stable_ostrich.gif'></p></td>
-    <td><p align='center'><img src='https://s3.amazonaws.com/python-vidstab/readme/wide_stable_ostrich.gif'></p></td>
-  </tr>
-</table>
-
-|                            `border_type='reflect'`                             |                            `border_type='replicate'`                             |
-| :----------------------------------------------------------------------------: | :------------------------------------------------------------------------------: |
-| ![](https://s3.amazonaws.com/python-vidstab/readme/reflect_stable_ostrich.gif) | ![](https://s3.amazonaws.com/python-vidstab/readme/replicate_stable_ostrich.gif) |
-
-_[Video](https://www.youtube.com/watch?v=9pypPqbV_GM) used with permission from [HappyLiving](https://www.facebook.com/happylivinginfl/)_
-
-### Using Frame Layering
-
-```python
-from vidstab import VidStab, layer_overlay, layer_blend
-
-# init vid stabilizer
-stabilizer = VidStab()
-
-# use vidstab.layer_overlay for generating a trail effect
-stabilizer.stabilize(input_path=INPUT_VIDEO_PATH,
-                     output_path='trail_stable_video.avi',
-                     border_type='black',
-                     border_size=100,
-                     layer_func=layer_overlay)
-
-
-# create custom overlay function
-# here we use vidstab.layer_blend with custom alpha
-#   layer_blend will generate a fading trail effect with some motion blur
-def layer_custom(foreground, background):
-    return layer_blend(foreground, background, foreground_alpha=.8)
-
-# use custom overlay function
-stabilizer.stabilize(input_path=INPUT_VIDEO_PATH,
-                     output_path='blend_stable_video.avi',
-                     border_type='black',
-                     border_size=100,
-                     layer_func=layer_custom)
-```
+## Tips for Best Results
 
-|                      `layer_func=vidstab.layer_overlay`                      |                       `layer_func=vidstab.layer_blend`                       |
-| :--------------------------------------------------------------------------: | :--------------------------------------------------------------------------: |
-| ![](https://s3.amazonaws.com/python-vidstab/readme/trail_stable_ostrich.gif) | ![](https://s3.amazonaws.com/python-vidstab/readme/blend_stable_ostrich.gif) |
-
-_[Video](https://www.youtube.com/watch?v=9pypPqbV_GM) used with permission from [HappyLiving](https://www.facebook.com/happylivinginfl/)_
-
-### Automatic border sizing
-
-```python
-from vidstab import VidStab, layer_overlay
-
-stabilizer = VidStab()
-
-stabilizer.stabilize(input_path=INPUT_VIDEO_PATH,
-                     output_path='auto_border_stable_video.avi',
-                     border_size='auto',
-                     # frame layering to show performance of auto sizing
-                     layer_func=layer_overlay)
-```
-
-<p align='center'>
-  <img width='45%' src='https://s3.amazonaws.com/python-vidstab/readme/auto_border_stable_ostrich.gif'>
-</p>
-
-### Stabilizing a frame at a time
+1. **Smoothing Window Size**:
 
-The method `VidStab.stabilize_frame()` can accept `numpy` arrays to allow stabilization processing a frame at a time.
-This can allow pre/post processing for each frame to be stabilized; see examples below.
+    - Smaller values (10-20): Retains more intentional motion, less stable
+    - Medium values (30-50): Good balance for most videos
+    - Larger values (60-100): Very smooth but may crop more of the frame
 
-#### Simplest form
+2. **Border Handling**:
 
-```python
-from vidstab.VidStab import VidStab
+    - "black": Best for most cases as it clearly shows the stabilization effect
+    - "reflect": Good for nature scenes where black borders would be distracting
+    - "replicate": Works well for sky or other uniform backgrounds
 
-stabilizer = VidStab()
-vidcap = cv2.VideoCapture('input_video.mov')
+3. **Keypoint Methods**:
 
-while True:
-     grabbed_frame, frame = vidcap.read()
+    - Try GFTT first as it works well in most cases
+    - For fast-moving videos, try FAST or ORB
+    - For complex scenes with lots of details, SIFT may provide better results
 
-     if frame is not None:
-        # Perform any pre-processing of frame before stabilization here
-        pass
+4. **Layer Effects**:
+    - Use overlay for artistic "motion trails"
+    - Use blend with alpha 0.3-0.7 for soft motion blur effect
 
-     # Pass frame to stabilizer even if frame is None
-     # stabilized_frame will be an all black frame until iteration 30
-     stabilized_frame = stabilizer.stabilize_frame(input_frame=frame,
-                                                   smoothing_window=30)
-     if stabilized_frame is None:
-         # There are no more frames available to stabilize
-         break
+## Internal Implementation
 
-     # Perform any post-processing of stabilized frame here
-     pass
-```
+The module consists of two main classes:
 
-#### Example with object tracking
+-   `VidStabWrapper`: A high-level wrapper around the vidstab library
+-   Helper functions for layer effects
 
-```python
-import os
-import cv2
-from vidstab import VidStab, layer_overlay, download_ostrich_video
+The implementation handles edge cases like:
 
-# Download test video to stabilize
-if not os.path.isfile("ostrich.mp4"):
-    download_ostrich_video("ostrich.mp4")
+-   Videos with few trackable features
+-   Error handling for corrupted video files
+-   Memory-efficient processing of large videos
 
-# Initialize object tracker, stabilizer, and video reader
-object_tracker = cv2.TrackerCSRT_create()
-stabilizer = VidStab()
-vidcap = cv2.VideoCapture("ostrich.mp4")
+## Requirements
 
-# Initialize bounding box for drawing rectangle around tracked object
-object_bounding_box = None
+-   vidstab
+-   OpenCV (cv2)
+-   NumPy
+-   Matplotlib (for plotting)
 
-while True:
-    grabbed_frame, frame = vidcap.read()
+## Limitations
 
-    # Pass frame to stabilizer even if frame is None
-    stabilized_frame = stabilizer.stabilize_frame(input_frame=frame, border_size=50)
-
-    # If stabilized_frame is None then there are no frames left to process
-    if stabilized_frame is None:
-        break
-
-    # Draw rectangle around tracked object if tracking has started
-    if object_bounding_box is not None:
-        success, object_bounding_box = object_tracker.update(stabilized_frame)
-
-        if success:
-            (x, y, w, h) = [int(v) for v in object_bounding_box]
-            cv2.rectangle(stabilized_frame, (x, y), (x + w, y + h),
-                          (0, 255, 0), 2)
-
-    # Display stabilized output
-    cv2.imshow('Frame', stabilized_frame)
-
-    key = cv2.waitKey(5)
-
-    # Select ROI for tracking and begin object tracking
-    # Non-zero frame indicates stabilization process is warmed up
-    if stabilized_frame.sum() > 0 and object_bounding_box is None:
-        object_bounding_box = cv2.selectROI("Frame",
-                                            stabilized_frame,
-                                            fromCenter=False,
-                                            showCrosshair=True)
-        object_tracker.init(stabilized_frame, object_bounding_box)
-    elif key == 27:
-        break
-
-vidcap.release()
-cv2.destroyAllWindows()
-```
-
-<p align='center'>
-  <img width='50%' src='https://s3.amazonaws.com/python-vidstab/readme/obj_tracking_vidstab_1.gif'>
-</p>
-
-### Working with live video
-
-The `VidStab` class can also process live video streams. The underlying video reader is `cv2.VideoCapture`([documentation](https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_gui/py_video_display/py_video_display.html)).
-The relevant snippet from the documentation for stabilizing live video is:
-
-> _Its argument can be either the device index or the name of a video file. Device index is just the number to specify which camera. Normally one camera will be connected (as in my case). So I simply pass 0 (or -1). You can select the second camera by passing 1 and so on._
-
-The `input_path` argument of the `VidStab.stabilize` method can accept integers that will be passed directly to `cv2.VideoCapture` as a device index. You can also pass a device index to the `--input` argument for command line usage.
-
-One notable difference between live feeds and video files is that webcam footage does not have a definite end point.
-The options for ending a live video stabilization are to set the max length using the `max_frames` argument or to manually stop the process by pressing the <kbd>Esc</kbd> key or the <kbd>Q</kbd> key.
-If `max_frames` is not provided then no progress bar can be displayed for live video stabilization processes.
-
-#### Example
-
-```python
-from vidstab import VidStab
-
-stabilizer = VidStab()
-stabilizer.stabilize(input_path=0,
-                     output_path='stable_webcam.avi',
-                     max_frames=1000,
-                     playback=True)
-```
-
-<p align='center'>
-  <img width='50%' src='https://s3.amazonaws.com/python-vidstab/readme/webcam_stable.gif'>
-</p>
-
-### Transform file writing & reading
-
-#### Generating and saving transforms to file
-
-```python
-import numpy as np
-from vidstab import VidStab, download_ostrich_video
-
-# Download video if needed
-download_ostrich_video(INPUT_VIDEO_PATH)
-
-# Generate transforms and save to TRANSFORMATIONS_PATH as csv (no headers)
-stabilizer = VidStab()
-stabilizer.gen_transforms(INPUT_VIDEO_PATH)
-np.savetxt(TRANSFORMATIONS_PATH, stabilizer.transforms, delimiter=',')
-```
-
-File at `TRANSFORMATIONS_PATH` is of the form shown below. The 3 columns represent delta x, delta y, and delta angle respectively.
-
-```
--9.249733913760086068e+01,2.953221378387767970e+01,-2.875918912994855636e-02
--8.801434576214279559e+01,2.741942225927152776e+01,-2.715232319470826938e-02
-```
-
-#### Reading and using transforms from file
-
-Below example reads a file of transforms and applies to an arbitrary video. The transform file is of the form shown in [above section](#generating-and-saving-transforms-to-file).
-
-```python
-import numpy as np
-from vidstab import VidStab
-
-# Read in csv transform data, of form (delta x, delta y, delta angle):
-transforms = np.loadtxt(TRANSFORMATIONS_PATH, delimiter=',')
-
-# Create stabilizer and supply numpy array of transforms
-stabilizer = VidStab()
-stabilizer.transforms = transforms
-
-# Apply stabilizing transforms to INPUT_VIDEO_PATH and save to OUTPUT_VIDEO_PATH
-stabilizer.apply_transforms(INPUT_VIDEO_PATH, OUTPUT_VIDEO_PATH)
-```
+-   Very fast camera movements may result in excessive cropping
+-   Processing time increases with video resolution and duration
+-   Extremely shaky videos may not be perfectly stabilized

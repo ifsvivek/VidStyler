@@ -258,13 +258,13 @@ def create_object_removal_tab():
         ## Object Removal
         
         This tool allows you to remove unwanted objects from images using intelligent inpainting technology.
-        Draw over the objects you want to remove and select an inpainting method.
+        Draw over the objects you want to remove with the brush tool.
         """
         )
 
         with gr.Row():
             with gr.Column():
-                # Use ImageEditor instead of Image
+                # Use ImageEditor for drawing on the image
                 input_image = gr.ImageEditor(
                     label="Draw over objects to remove",
                     type="numpy",
@@ -272,12 +272,14 @@ def create_object_removal_tab():
                 )
 
                 with gr.Row():
-                    removal_method = gr.Radio(
-                        choices=["deepfill", "patchmatch", "generative"],
-                        value="patchmatch",
+                    inpaint_method = gr.Radio(
+                        choices=["Auto (Default)", "DeepFill (ML-based)", "OpenCV"],
+                        value="Auto (Default)",
                         label="Inpainting Method",
+                        info="Choose the algorithm to use for removing objects"
                     )
                     remove_button = gr.Button("Remove Object", variant="primary")
+                    reset_button = gr.Button("Reset Image")
 
             with gr.Column():
                 image_output = gr.Image(label="Result", height=500)
@@ -290,16 +292,21 @@ def create_object_removal_tab():
 
             try:
                 # Extract the layers from ImageEditor output
-                if isinstance(image_data, dict) and "composite" in image_data and "background" in image_data:
+                if (
+                    isinstance(image_data, dict)
+                    and "composite" in image_data
+                    and "background" in image_data
+                ):
                     # Get the original image (background)
                     image = image_data["background"]
-                    
+
                     # Get the image with drawing (composite)
                     composite = image_data["composite"]
                     
-                    # Get image dimensions
-                    h, w = image.shape[:2]
-                    
+                    # Debug info for input images
+                    print(f"Original image shape: {image.shape}, dtype: {image.dtype}")
+                    print(f"Composite image shape: {composite.shape}, dtype: {composite.dtype}")
+
                     # Create a mask by finding the difference between composite and background
                     diff = cv2.absdiff(composite, image)
                     
@@ -315,19 +322,27 @@ def create_object_removal_tab():
                     # Make sure mask is uint8
                     mask = mask.astype(np.uint8)
                     
-                    # Debug info
-                    print(f"Image shape: {image.shape}, type: {image.dtype}")
-                    print(f"Mask shape: {mask.shape}, type: {mask.dtype}")
+                    # Dilate mask slightly to ensure coverage
+                    kernel = np.ones((3, 3), np.uint8)
+                    mask = cv2.dilate(mask, kernel, iterations=1)
+                    
+                    # Debug info for mask
+                    print(f"Mask shape: {mask.shape}, dtype: {mask.dtype}")
                     print(f"Mask values - min: {mask.min()}, max: {mask.max()}")
                     
-                    # Apply object removal
-                    # Make a copy of the image to ensure we're not modifying the original
-                    image_copy = image.copy()
+                    # Map the UI selection to method parameter
+                    inpaint_method = "deepfill"  # Default
+                    if method == "OpenCV":
+                        inpaint_method = "generative"
+                    elif method == "DeepFill (ML-based)":
+                        inpaint_method = "deepfill"
                     
-                    # Apply inpainting
-                    result = remove_object(image_copy, mask, method)
+                    # Apply inpainting using the mask
+                    start_time = time.time()
+                    result = remove_object(image.copy(), mask, method=inpaint_method)
+                    process_time = time.time() - start_time
                     
-                    return result, f"Object removed using {method} method"
+                    return result, f"Object removed in {process_time:.2f} seconds using {method}"
                 else:
                     return None, "Please draw on the image to mark areas for removal"
 
@@ -336,26 +351,45 @@ def create_object_removal_tab():
                 traceback.print_exc()
                 return None, f"Error processing image: {str(e)}"
 
-        # Connect the remove button
+        # Reset the image (clear drawings)
+        def reset_image(image_data):
+            if (
+                image_data is None
+                or not isinstance(image_data, dict)
+                or "background" not in image_data
+            ):
+                return None, "No image to reset"
+            return {"image": image_data["background"], "mask": None}, "Image reset"
+
+        # Connect the buttons
         remove_button.click(
             fn=process_removal,
-            inputs=[input_image, removal_method],
+            inputs=[input_image, inpaint_method],
             outputs=[image_output, status],
+        )
+
+        reset_button.click(
+            fn=reset_image,
+            inputs=[input_image],
+            outputs=[input_image, status],
         )
 
         gr.Markdown(
             """
         ### Instructions:
         1. Upload an image to the editor
-        2. Use the drawing tools to mark areas you want to remove
-        3. Select an inpainting method
+        2. Draw over the objects you want to remove
+        3. Select an inpainting method:
+           - **Auto**: Chooses the best method based on your image
+           - **DeepFill**: Uses machine learning for more natural results
+           - **OpenCV**: Faster but may be less accurate for complex scenes
         4. Click "Remove Object" to process the image
+        5. Use "Reset Image" to clear your drawings and start over
         
         ### Tips:
-        - For small objects, the PatchMatch method often gives clean results
-        - For complex scenes, try the generative method
         - Draw carefully to cover the entire object you want to remove
-        - Use a thicker brush for better coverage
+        - For complex objects or textures, try the DeepFill method
+        - For simple objects against uniform backgrounds, OpenCV may work well
         - Make sure to completely cover the object you want to remove
         """
         )
