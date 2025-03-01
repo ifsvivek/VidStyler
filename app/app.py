@@ -397,8 +397,8 @@ def create_object_removal_tab():
 
 def create_ui():
     """Creates the complete Gradio UI."""
-    with gr.Blocks(title="VisualAlchemy") as app:
-        gr.Markdown("# VisualAlchemy")
+    with gr.Blocks(title="VidStyler") as app:
+        gr.Markdown("# VidStyler")
         gr.Markdown(
             "Transform your media with intelligent editing tools powered by deep learning."
         )

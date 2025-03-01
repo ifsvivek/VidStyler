@@ -1,6 +1,6 @@
-# VisualAlchemy: AI-powered Image and Video Editing Suite
+# VidStyler: AI-powered Image and Video Editing Suite
 
-VisualAlchemy is a comprehensive tool that implements intelligent tools to assist users in image and video editing tasks using deep learning and computer vision techniques. The suite offers three main functionalities:
+VidStyler is a comprehensive tool that implements intelligent tools to assist users in image and video editing tasks using deep learning and computer vision techniques. The suite offers three main functionalities:
 
 -   **Neural Style Transfer**: Apply artistic styles to images
 -   **Video Stabilization**: Reduce shakiness in videos
@@ -35,8 +35,8 @@ VisualAlchemy is a comprehensive tool that implements intelligent tools to assis
 ## Installation
 
 ```bash
-git clone https://github.com/yourusername/visualalchemy.git
-cd visualalchemy
+git clone https://github.com/ifsvivek/VidStyler.git
+cd VidStyler
 pip install -r requirements.txt
 ```
 
@@ -119,13 +119,14 @@ The object removal pipeline consists of:
 ## Project Structure
 
 ```
-/home/sic/Documentations/Vivek_FYP/
+.
 ├── app/
 │   └── app.py           # Gradio interface implementation
 ├── src/
 │   ├── style_transfer/  # Neural style transfer implementation
 │   ├── video_stabilization/  # Video stabilization algorithms
 │   └── object_removal/  # Object detection and removal system
+├── img/                 # Sample images and UI screenshots
 ├── run.py               # Application entry point
 └── README.md            # Project documentation
 ```
