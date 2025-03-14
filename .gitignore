@@ -1,3 +1,8 @@
 .venv/
 .gradio/
 __pycache__/
+weights
+*.egg-info
+*.pyc
+temp
+**/*.png

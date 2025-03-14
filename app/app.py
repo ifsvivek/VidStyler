@@ -3,12 +3,14 @@ import sys
 import numpy as np
 import cv2
 import time
+import os
 
 # Add the project root to the path so we can import our modules
-sys.path.append("/home/sic/Documentations/Vivek_FYP")
+sys.path.append("/home/sic/Projects/Vivek_FYP")
 from src.video_stabilization.stabilize import stabilize_video
 from src.object_removal.inpainting import remove_object
 from src.style_transfer.neural_style import apply_neural_style_transfer
+from Kolors.sample_inpainting import infer as kolors_infer
 
 
 def create_style_transfer_tab():
@@ -276,7 +278,7 @@ def create_object_removal_tab():
                         choices=["Auto (Default)", "DeepFill (ML-based)", "OpenCV"],
                         value="Auto (Default)",
                         label="Inpainting Method",
-                        info="Choose the algorithm to use for removing objects"
+                        info="Choose the algorithm to use for removing objects",
                     )
                     remove_button = gr.Button("Remove Object", variant="primary")
                     reset_button = gr.Button("Reset Image")
@@ -302,52 +304,58 @@ def create_object_removal_tab():
 
                     # Get the image with drawing (composite)
                     composite = image_data["composite"]
-                    
+
                     # Debug info for input images
                     print(f"Original image shape: {image.shape}, dtype: {image.dtype}")
-                    print(f"Composite image shape: {composite.shape}, dtype: {composite.dtype}")
+                    print(
+                        f"Composite image shape: {composite.shape}, dtype: {composite.dtype}"
+                    )
 
                     # Create a mask by finding the difference between composite and background
                     diff = cv2.absdiff(composite, image)
-                    
+
                     # Convert to grayscale
                     if len(diff.shape) == 3:
                         mask_gray = cv2.cvtColor(diff, cv2.COLOR_RGB2GRAY)
                     else:
                         mask_gray = diff
-                    
+
                     # Apply threshold to create binary mask
                     _, mask = cv2.threshold(mask_gray, 10, 255, cv2.THRESH_BINARY)
-                    
+
                     # Make sure mask is uint8
                     mask = mask.astype(np.uint8)
-                    
+
                     # Dilate mask slightly to ensure coverage
                     kernel = np.ones((3, 3), np.uint8)
                     mask = cv2.dilate(mask, kernel, iterations=1)
-                    
+
                     # Debug info for mask
                     print(f"Mask shape: {mask.shape}, dtype: {mask.dtype}")
                     print(f"Mask values - min: {mask.min()}, max: {mask.max()}")
-                    
+
                     # Map the UI selection to method parameter
                     inpaint_method = "deepfill"  # Default
                     if method == "OpenCV":
                         inpaint_method = "generative"
                     elif method == "DeepFill (ML-based)":
                         inpaint_method = "deepfill"
-                    
+
                     # Apply inpainting using the mask
                     start_time = time.time()
                     result = remove_object(image.copy(), mask, method=inpaint_method)
                     process_time = time.time() - start_time
-                    
-                    return result, f"Object removed in {process_time:.2f} seconds using {method}"
+
+                    return (
+                        result,
+                        f"Object removed in {process_time:.2f} seconds using {method}",
+                    )
                 else:
                     return None, "Please draw on the image to mark areas for removal"
 
             except Exception as e:
                 import traceback
+
                 traceback.print_exc()
                 return None, f"Error processing image: {str(e)}"
 
@@ -395,6 +403,176 @@ def create_object_removal_tab():
         )
 
 
+def create_kolors_inpainting_tab():
+    """Creates the text-guided inpainting tab UI elements."""
+    with gr.Tab("Text-Guided Inpainting"):
+        gr.Markdown(
+            """
+        ## Text-Guided Inpainting
+        
+        This advanced tool allows you to modify specific parts of an image using natural language prompts.
+        Upload an image and a corresponding mask, then describe what changes you want to make.
+        """
+        )
+
+        with gr.Row():
+            with gr.Column():
+                # Image and mask upload
+                input_image = gr.Image(label="Original Image", type="pil")
+                mask_image = gr.Image(
+                    label="Mask Image (white areas will be modified)", type="pil"
+                )
+
+                with gr.Row():
+                    prompt_input = gr.Textbox(
+                        label="Modification Prompt",
+                        placeholder="Example: change the shirt color to red",
+                        value="change the shirt color to red",
+                    )
+                    negative_prompt = gr.Textbox(
+                        label="Negative Prompt (optional)",
+                        placeholder="Describe what you don't want to see",
+                    )
+
+                with gr.Accordion("Advanced Settings", open=False):
+                    with gr.Row():
+                        guidance_scale = gr.Slider(
+                            minimum=1.0,
+                            maximum=20.0,
+                            value=6.0,
+                            step=0.5,
+                            label="Guidance Scale",
+                            info="How closely to follow the prompt (higher = more literal)",
+                        )
+                        inference_steps = gr.Slider(
+                            minimum=10,
+                            maximum=100,
+                            value=25,
+                            step=5,
+                            label="Inference Steps",
+                            info="More steps = better quality but slower",
+                        )
+
+                    with gr.Row():
+                        strength = gr.Slider(
+                            minimum=0.5,
+                            maximum=0.999,
+                            value=0.999,
+                            step=0.01,
+                            label="Effect Strength",
+                            info="How strongly to apply the effect",
+                        )
+                        seed = gr.Slider(
+                            minimum=0,
+                            maximum=2147483647,
+                            value=603,
+                            step=1,
+                            label="Random Seed",
+                            info="For reproducible results",
+                        )
+
+                inpaint_button = gr.Button("Generate Inpainting", variant="primary")
+
+            with gr.Column():
+                output_image = gr.Image(label="Result")
+                status = gr.Textbox(label="Status")
+
+        # Function to handle inpainting
+        def process_kolors_inpainting(
+            input_img,
+            mask_img,
+            prompt,
+            neg_prompt,
+            guidance,
+            steps,
+            strength_val,
+            seed_val,
+        ):
+            if input_img is None or mask_img is None:
+                return None, "Please upload both an image and a mask"
+
+            try:
+                # Save temporary files for the inpainting script to use
+                temp_dir = os.path.join(
+                    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "temp"
+                )
+                os.makedirs(temp_dir, exist_ok=True)
+
+                input_path = os.path.join(temp_dir, "temp_input.png")
+                mask_path = os.path.join(temp_dir, "temp_mask.png")
+
+                input_img.save(input_path)
+                mask_img.save(mask_path)
+
+                # Prepare arguments for the inpainting function
+                import torch
+
+                args = {
+                    "image_path": input_path,
+                    "mask_path": mask_path,
+                    "prompt": prompt,
+                    "negative_prompt": neg_prompt,
+                    "guidance_scale": guidance,
+                    "num_inference_steps": int(steps),
+                    "strength": strength_val,
+                    "seed": int(seed_val),
+                    "return_image": True,  # Special flag to return image instead of saving
+                }
+
+                # Call the modified infer function
+                start_time = time.time()
+
+                # Import the function here to avoid loading models until needed
+                from Kolors.sample_inpainting import infer
+
+                result_image = infer(**args)
+
+                process_time = time.time() - start_time
+                return (
+                    result_image,
+                    f"Inpainting completed in {process_time:.2f} seconds.",
+                )
+
+            except Exception as e:
+                import traceback
+
+                traceback.print_exc()
+                return None, f"Error processing inpainting: {str(e)}"
+
+        inpaint_button.click(
+            fn=process_kolors_inpainting,
+            inputs=[
+                input_image,
+                mask_image,
+                prompt_input,
+                negative_prompt,
+                guidance_scale,
+                inference_steps,
+                strength,
+                seed,
+            ],
+            outputs=[output_image, status],
+        )
+
+        gr.Markdown(
+            """
+        ### Instructions:
+        1. Upload your image
+        2. Upload or create a mask image (white areas will be modified)
+        3. Enter a text prompt describing what changes you want to make
+        4. Optional: adjust advanced settings
+        5. Click "Generate Inpainting" to process the image
+        
+        ### Tips:
+        - Use clear, descriptive prompts like "change the shirt color to red" or "replace the background with a beach scene"
+        - The white areas in the mask indicate where changes will be applied
+        - For best results, ensure the mask covers the entire object you want to modify
+        - Adjust guidance scale to control how closely the result follows your text prompt
+        - Try different random seeds if you're not satisfied with the initial result
+        """
+        )
+
+
 def create_ui():
     """Creates the complete Gradio UI."""
     with gr.Blocks(title="VidStyler") as app:
@@ -407,6 +585,7 @@ def create_ui():
             create_style_transfer_tab()
             create_video_stabilization_tab()
             create_object_removal_tab()
+            create_kolors_inpainting_tab()  # Add the new tab
 
         gr.Markdown("### About")
         gr.Markdown(
