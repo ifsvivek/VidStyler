@@ -1,6 +1,6 @@
-# Kolors Inpainting
+# Inpainting
 
-A sample script for image inpainting using the Kolors model. This tool allows you to modify specific parts of an image based on text prompts.
+A sample script for image inpainting using the model. This tool allows you to modify specific parts of an image based on text prompts.
 
 ## Features
 

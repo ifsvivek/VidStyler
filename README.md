@@ -1,10 +1,11 @@
 # VidStyler: AI-powered Image and Video Editing Suite
 
-VidStyler is a comprehensive tool that implements intelligent tools to assist users in image and video editing tasks using deep learning and computer vision techniques. The suite offers three main functionalities:
+VidStyler is a comprehensive tool that implements intelligent tools to assist users in image and video editing tasks using deep learning and computer vision techniques. The suite offers four main functionalities:
 
 -   **Neural Style Transfer**: Apply artistic styles to images
 -   **Video Stabilization**: Reduce shakiness in videos
 -   **Object Removal**: Automatically remove objects from images and videos
+-   **Inpainting**: Modify specific parts of an image based on text prompts
 
 ## Features
 
@@ -31,6 +32,15 @@ VidStyler is a comprehensive tool that implements intelligent tools to assist us
 -   Support for images with alpha channels
 -   Real-time feedback in web interface
 -   Memory-efficient processing for large images
+
+### Inpainting
+
+-   Text-guided image inpainting
+-   Leverages ChatGLM text encoder for natural language understanding
+-   Based on Stable Diffusion XL architecture
+-   High-resolution output support (up to 1024x768)
+-   Interactive mask creation to specify areas for modification
+-   Control over guidance scale and inference steps
 
 ## Installation
 
@@ -80,6 +90,15 @@ Navigate to the provided local URL (typically http://127.0.0.1:7860) in your web
 4. Click "Remove Object" to process the image
 5. Use "Reset Image" to clear your drawings and start over
 
+### Inpainting Usage
+
+1. Upload an image to the editor
+2. Create a mask by drawing over areas you want to modify
+3. Enter a text prompt describing the desired changes (e.g., "change the shirt color to red")
+4. Adjust parameters like guidance scale and inference steps if needed
+5. Click "Apply Inpainting" to process the image
+6. Download the modified result
+
 ## How It Works
 
 ### Neural Style Transfer Implementation
@@ -116,6 +135,16 @@ The object removal pipeline consists of:
     - DeepFill uses a neural network to generate realistic textures
 4. The result is presented with the unwanted objects seamlessly removed
 
+### Inpainting Implementation
+
+The inpainting module uses a text-guided approach:
+
+1. Process the input image and mask to identify areas for modification
+2. Encode the text prompt using the ChatGLM text encoder
+3. Apply the Stable Diffusion XL-based inpainting model to generate the modified content
+4. Blend the inpainted region with the original image seamlessly
+5. Return the final result with the specified modifications applied
+
 ## Project Structure
 
 ```
@@ -126,6 +155,7 @@ The object removal pipeline consists of:
 │   ├── style_transfer/  # Neural style transfer implementation
 │   ├── video_stabilization/  # Video stabilization algorithms
 │   └── object_removal/  # Object detection and removal system
+│   └── inpainting/      # Text-guided inpainting system
 ├── img/                 # Sample images and UI screenshots
 ├── run.py               # Application entry point
 └── README.md            # Project documentation
@@ -137,10 +167,12 @@ The object removal pipeline consists of:
 -   PyTorch 1.8+
 -   OpenCV 4.5+
 -   Gradio 2.0+
+-   diffusers library
 -   vidstab
 -   NumPy
 -   Matplotlib
 -   TensorFlow (for DeepFill inpainting)
+-   PIL (Pillow)
 -   CUDA-capable GPU (recommended for faster processing)
 
 ## Limitations
@@ -149,3 +181,4 @@ The object removal pipeline consists of:
 -   Very fast camera movements may result in excessive cropping during stabilization
 -   Extremely complex object removal may require manual touchup
 -   Processing time increases with image/video resolution
+-   Inpainting results depend on the clarity and specificity of text prompts
