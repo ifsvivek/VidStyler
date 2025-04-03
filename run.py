@@ -5,10 +5,6 @@ import os
 project_root = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(project_root)
 
-# Also add Kolors directory to the path
-kolors_dir = os.path.join(project_root, "Kolors")
-sys.path.append(kolors_dir)
-
 # Create a temp directory for file operations
 os.makedirs(os.path.join(project_root, "temp"), exist_ok=True)
 
