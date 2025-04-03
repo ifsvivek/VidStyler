@@ -144,23 +144,7 @@ VidStyler is designed as an integrated suite with a modular architecture that se
 
 The system follows a processing pipeline pattern where media inputs (images or videos) flow through specific processing steps based on the selected editing function, with appropriate parameter controls and feedback mechanisms at each stage.
 
-## 1.9 Document Structure
-
-The remainder of this document is organized as follows:
-
-**Chapter 2: Literature Review** examines existing research and implementations in neural style transfer, video stabilization, and image inpainting, identifying key techniques, challenges, and benchmarks in each domain.
-
-**Chapter 3: Methodology** details the technical approach, algorithms, and implementation details for each core component of VidStyler, including neural network architectures, optimization techniques, and parameter selection strategies.
-
-**Chapter 4: Implementation** describes the practical realization of VidStyler, including system integration, user interface design, performance optimizations, and deployment considerations.
-
-**Chapter 5: Results and Evaluation** presents the outcomes of the implementation, assessing the quality, performance, and usability of each component through objective metrics and subjective evaluation.
-
-**Chapter 6: Conclusion and Future Work** summarizes the achievements of the project, reflects on challenges encountered, and outlines potential directions for future development and improvement.
-
-**Appendices** provide additional technical details, code documentation, and supplementary materials that support the main content of the document.
-
-## 1.10 Summary
+## 1.9 Summary
 
 This chapter introduced VidStyler, an AI-powered image and video editing suite designed to make advanced editing capabilities accessible to users with varying levels of technical expertise. The system addresses three core editing needs: artistic style transfer, video stabilization, and object removal.
 
