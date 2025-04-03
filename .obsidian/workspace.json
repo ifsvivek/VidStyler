@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "757c00f20c7a7ee2",
+        "id": "3d1bce43ef396b6b",
         "type": "tabs",
         "children": [
           {
-            "id": "a6c0a3fa79105c8c",
+            "id": "61ea27cb1ff72fa5",
             "type": "leaf",
             "state": {
               "type": "empty",
@@ -81,16 +81,13 @@
             }
           },
           {
-            "id": "aca7b6591d0379b3",
+            "id": "24a6282f164d4340",
             "type": "leaf",
             "state": {
-              "type": "file-explorer",
-              "state": {
-                "sortOrder": "alphabetical",
-                "autoReveal": false
-              },
-              "icon": "lucide-folder-closed",
-              "title": "Files"
+              "type": "mk-path-view",
+              "state": {},
+              "icon": "layout-grid",
+              "title": "Navigator"
             }
           }
         ],
@@ -158,12 +155,14 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "a6c0a3fa79105c8c",
+  "active": "24a6282f164d4340",
   "lastOpenFiles": [
+    "Untitled.md",
+    "README.md",
+    "Docs/Sample/introduction_page_final1.pdf",
     "Docs/Chapter1_Introduction.md",
     "Docs/pdf/Chapter1_Introduction.pdf",
     "Docs/pdf",
-    "README.md",
     "Tags",
     "Sem6/RES/QB.md",
     "fdg.md",
@@ -176,7 +175,6 @@
     "Sem6/CC/CC.md",
     "Sem6/CV/CV_Module-1-textbook.pdf",
     "Sem6/CV/CV_Module 1 - Copy.pptx.pdf",
-    "Sem6/CV/CV_Module 2.pptx.pdf",
     "Sem6/RES/attachments/Pasted image 20250327184608.png",
     "df.md",
     "Sem6/Machine Learning/QB.md",
@@ -198,7 +196,6 @@
     "SEM5/SEPM/Key Concepts.md",
     "Excalidraw/Drawing 2024-12-02 16.23.46.excalidraw.md",
     "ISRO/L Survey.md",
-    "5thSem/Answer/Asssssets.md",
     "5thSem/BCS502 - Computer Networks/attachments/Pasted image 20250112210010.png",
     "Pasted image 20250110182027.png",
     "Pasted image 20250110180154.png",
