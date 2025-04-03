@@ -4,76 +4,25 @@
     "type": "split",
     "children": [
       {
-        "id": "caa5c0ef86a4c214",
+        "id": "b74948775ce1a0d3",
         "type": "tabs",
         "children": [
           {
-            "id": "5a3b2ece59115079",
+            "id": "c88781287168934a",
             "type": "leaf",
-            "pinned": true,
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Sem6/RES/QB.md",
+                "file": "Docs/Chapter1_Introduction.md",
                 "mode": "preview",
                 "source": false,
                 "backlinks": false
               },
-              "pinned": true,
               "icon": "lucide-file",
-              "title": "QB"
-            }
-          },
-          {
-            "id": "23fe65f385cc782e",
-            "type": "leaf",
-            "state": {
-              "type": "empty",
-              "state": {},
-              "icon": "lucide-file",
-              "title": "New tab"
-            }
-          },
-          {
-            "id": "b30b39057ad98929",
-            "type": "leaf",
-            "pinned": true,
-            "state": {
-              "type": "pdf",
-              "state": {
-                "file": "Sem6/RES/RES_Module 2.pdf"
-              },
-              "pinned": true,
-              "icon": "lucide-file-text",
-              "title": "RES_Module 2"
-            }
-          },
-          {
-            "id": "434636618577f298",
-            "type": "leaf",
-            "state": {
-              "type": "pdf",
-              "state": {
-                "file": "Sem6/RES/Technologies of RES- 1st int Question bank-2024-25.docx.pdf"
-              },
-              "icon": "lucide-file-text",
-              "title": "Technologies of RES- 1st int Question bank-2024-25.docx"
-            }
-          },
-          {
-            "id": "086bc1ad9849f73d",
-            "type": "leaf",
-            "state": {
-              "type": "pdf",
-              "state": {
-                "file": "Sem6/RES/RES-Module2-Notes.pdf"
-              },
-              "icon": "lucide-file-text",
-              "title": "RES-Module2-Notes"
+              "title": "Chapter1_Introduction"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -137,13 +86,13 @@
             }
           },
           {
-            "id": "1bb47c68de73c540",
+            "id": "15876b4cf7a9146b",
             "type": "leaf",
             "state": {
               "type": "mk-path-view",
               "state": {},
-              "icon": "lucide-file",
-              "title": "Plugin no longer active"
+              "icon": "layout-grid",
+              "title": "Navigator"
             }
           }
         ],
@@ -206,11 +155,17 @@
     "hiddenItems": {
       "graph:Open graph view": false,
       "canvas:Create new canvas": false,
-      "command-palette:Open command palette": false
+      "command-palette:Open command palette": false,
+      "obsidian-excalidraw-plugin:New drawing": false,
+      "obsidian-git:Open Git source control": false
     }
   },
-  "active": "23fe65f385cc782e",
+  "active": "c88781287168934a",
   "lastOpenFiles": [
+    "Docs/pdf/Chapter1_Introduction.pdf",
+    "Docs/pdf",
+    "README.md",
+    "Tags",
     "Sem6/RES/QB.md",
     "fdg.md",
     "Sem6/RES/RES-Module2-Notes.pdf",
@@ -224,8 +179,6 @@
     "Sem6/CV/CV_Module 1 - Copy.pptx.pdf",
     "Sem6/CV/CV_Module 2.pptx.pdf",
     "Sem6/CV/QB.pdf",
-    "Sem6/RES/QB.pdf",
-    "Sem6/RES/RES-Module1-notes.pdf",
     "Sem6/RES/attachments/Pasted image 20250327184608.png",
     "df.md",
     "Sem6/Machine Learning/QB.md",
@@ -248,12 +201,10 @@
     "Excalidraw/Drawing 2024-12-02 16.23.46.excalidraw.md",
     "ISRO/L Survey.md",
     "5thSem/Answer/Asssssets.md",
-    "5thSem/BCS502 - Computer Networks/CN FINAL.md",
     "5thSem/BCS502 - Computer Networks/attachments/Pasted image 20250112210010.png",
     "Pasted image 20250110182027.png",
     "Pasted image 20250110180154.png",
     "Pasted image 20250110175836.png",
-    "5thSem/Answer/sepm/Gemini.md",
     "5thSem/Answer/sepm/Pasted image 20250107163112.png",
     "5thSem/Answer/sepm/Pasted image 20250106224508.png",
     "5thSem/Answer/sepm/Pasted image 20250106224450.png",
