@@ -6,3 +6,6 @@ weights
 *.pyc
 temp
 **/*.png
+.obsidian
+.makemd
+.space
