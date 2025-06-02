@@ -1,0 +1,49 @@
+# Core libraries
+numpy
+opencv-python
+pillow
+scipy
+matplotlib
+
+# Deep learning
+torch --index-url https://download.pytorch.org/whl/cu126
+torchvision --index-url https://download.pytorch.org/whl/cu126
+torchaudio --index-url https://download.pytorch.org/whl/cu126
+tensorflow
+
+# UI
+gradio
+
+# Video processing
+vidstab
+
+# Utilities
+tqdm
+
+
+# extra
+
+fire
+triton
+pydantic
+accelerate
+deepspeed
+huggingface-hub
+imageio
+numpy
+omegaconf
+pandas
+Pillow
+tokenizers
+torch
+torchvision
+transformers
+xformers
+safetensors
+diffusers
+sentencepiece
+gradio
+opencv-python
+einops
+timm
+onnxruntime
