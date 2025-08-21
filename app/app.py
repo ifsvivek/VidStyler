@@ -366,7 +366,13 @@ def create_object_removal_tab():
                 or "background" not in image_data
             ):
                 return None, "No image to reset"
-            return {"image": image_data["background"], "mask": None}, "Image reset"
+
+            # Return the ImageEditor compatible format
+            return {
+                "background": image_data["background"],
+                "layers": [],
+                "composite": image_data["background"],
+            }, "Image reset"
 
         # Connect the buttons
         remove_button.click(
