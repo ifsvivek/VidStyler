@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "report.md",
+                "file": "ppt.md",
                 "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "report"
+              "title": "ppt"
             }
           }
         ]
@@ -78,8 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "right": {
     "id": "efc5c6949487cf1d",
@@ -169,8 +168,14 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "30527e6a0c5f0d5a",
+  "active": "20943de787aeb732",
   "lastOpenFiles": [
+    "ppt.md",
+    "someth.md",
+    "Paper.md",
+    "python MCQ.md",
+    "Paper.pdf",
+    "report.md",
     "img/report/Modular Architecture.png",
     "img/report/image.png",
     "img/report/Sequence Diagram Object Removal.png",
@@ -182,7 +187,6 @@
     "img/report",
     "img/NST.jpg",
     "img/VS.jpg",
-    "img/OR.jpg",
     "img/src/object_removal/model/model.py",
     "img/src/object_removal/model/__init__.py",
     "img/src/video_stabilization/vidstab.py",
@@ -193,9 +197,6 @@
     "img/src/style_transfer/models.py",
     "img/src/style_transfer/__init__.py",
     "img/src/style_transfer/README.md",
-    "img/src/object_removal/model",
-    "img/src/object_removal/README.md",
-    "report.md",
-    "Untitled.md"
+    "img/src/object_removal/README.md"
   ]
 }
